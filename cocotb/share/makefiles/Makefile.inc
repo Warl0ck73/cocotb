@@ -71,7 +71,7 @@ ifeq ($(filter $(PYTHON_ARCH),64bit 32bit),)
 endif
 
 # Set PYTHONHOME to properly populate sys.path in embedded python interpreter
-export PYTHONHOME := $(shell $(PYTHON_BIN) -c 'import sys; print(sys.prefix)')
+export PYTHONHOME := $(shell $(PYTHON_BIN) -c 'from sysconfig import get_config_var; print(get_config_var("prefix"))')
 
 ifeq ($(OS),Msys)
     to_tcl_path = $(shell cygpath -m $(1) )
@@ -93,12 +93,22 @@ COCOTB_HDL_TIMEPRECISION ?= 1ps
 
 export COCOTB_RESULTS_FILE
 
-# Depend on all Python from the cocotb package. This triggers a
-# recompilation of the simulation if cocotb is updated.
-CUSTOM_SIM_DEPS += $(shell find $(COCOTB_PY_DIR)/cocotb/ -name "*.py")
+OS_TYPE := $(shell uname --operating-system)
+ifeq ($(OS_TYPE), Msys)
+    # Depend on all Python from the cocotb package. This triggers a
+    # recompilation of the simulation if cocotb is updated.
+    CUSTOM_SIM_DEPS += $(shell dir $(COCOTB_PY_DIR)/cocotb/*.py -b)
 
-# This triggers a recompilation of the simulation if cocotb library is updated.
-CUSTOM_SIM_DEPS += $(shell find $(LIB_DIR)/ -name "*")
+    # This triggers a recompilation of the simulation if cocotb library is updated.
+    CUSTOM_SIM_DEPS += $(shell dir $(LIB_DIR)/* -b)
+else
+    # Depend on all Python from the cocotb package. This triggers a
+    # recompilation of the simulation if cocotb is updated.
+    CUSTOM_SIM_DEPS += $(shell find $(COCOTB_PY_DIR)/cocotb/ -name "*.py")
+
+    # This triggers a recompilation of the simulation if cocotb library is updated.
+    CUSTOM_SIM_DEPS += $(shell find $(LIB_DIR)/ -name "*")
+endif
 
 $(SIM_BUILD):
 	mkdir -p $@
