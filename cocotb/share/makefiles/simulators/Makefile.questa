@@ -44,8 +44,7 @@ endif
 
 RTL_LIBRARY ?= work
 
-TOPLEVEL_LIBRARY ?= $(RTL_LIBRARY)
-TOPLEVEL := "$(TOPLEVEL_LIBRARY).$(TOPLEVEL)"
+TOPLEVEL := "$(RTL_LIBRARY).$(TOPLEVEL)"
 
 ifndef VLOG_ARGS
     VLOG_ARGS = -timescale $(COCOTB_HDL_TIMEUNIT)/$(COCOTB_HDL_TIMEPRECISION) -mfcu
@@ -58,8 +57,10 @@ ifdef VERILOG_INCLUDE_DIRS
 endif
 
 # below allows for maintaining legacy syntax as well as enables using cross-simulator vars COMPILE_ARGS/SIM_ARGS
-VLOG_ARGS += $(COMPILE_ARGS)
-VCOM_ARGS += $(COMPILE_ARGS)
+VERILOG_COMPILE_ARGS += $(EXTRA_COMPILE_ARGS)
+VHDL_COMPILE_ARGS += $(EXTRA_COMPILE_ARGS)
+VLOG_ARGS += $(VERILOG_COMPILE_ARGS)
+VCOM_ARGS += $(VHDL_COMPILE_ARGS)
 VSIM_ARGS += $(SIM_ARGS)
 
 ifeq ($(GUI),1)
@@ -88,8 +89,8 @@ ifeq ($(filter vhpi fli,$(VHDL_GPI_INTERFACE)),)
 endif
 
 ifeq ($(TOPLEVEL_LANG),vhdl)
-ifeq ($(VHDL_GPI_INTERFACE),fli)
     CUSTOM_COMPILE_DEPS += $(FLI_LIB)
+ifeq ($(VHDL_GPI_INTERFACE),fli)
     VSIM_ARGS += -foreign \"cocotb_init $(FLI_LIB)\"
 else
     VSIM_ARGS += -voptargs="-access=rw+/." -foreign \"vhpi_startup_routines_bootstrap $(call to_tcl_path,$(VHPI_LIB))\"
